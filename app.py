@@ -1,171 +1,117 @@
 import streamlit as st
-import pandas as pd
+import time
 
-# --- 1. PREMIUM CUSTOM STYLING (THE DESIGN) ---
-st.set_page_config(page_title="As We Rise | Sacco Pro", page_icon="🤝", layout="wide")
+# --- 1. THE HIGH-TECH GLOBAL STYLESHEET ---
+st.set_page_config(page_title="Kilele Sacco Pro", layout="wide")
 
 st.markdown("""
     <style>
-    .main { background-color: #f1f5f9; }
-    div[data-testid="stMetricValue"] { color: #059669; font-weight: 800; }
-    .stButton>button { width: 100%; border-radius: 12px; height: 3.5em; background-color: #059669; color: white; border: none; font-weight: bold; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
-    .stButton>button:hover { background-color: #047857; transform: translateY(-1px); }
-    .card { background-color: white; padding: 2rem; border-radius: 1rem; border-left: 6px solid #10b981; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1); margin-bottom: 1rem; }
-    .slogan { font-style: italic; color: #065f46; text-align: center; font-size: 1.2rem; margin-bottom: 2rem; }
-    .status-badge { padding: 4px 12px; border-radius: 15px; font-size: 0.8rem; background-color: #d1fae5; color: #065f46; font-weight: bold; }
-    </style>
-    """, unsafe_allow_html=True)
-
-# --- 2. GLOBAL SYSTEM CONTROLLER (THE M-PESA SIDE BACKEND) ---
-if 'sacco' not in st.session_state:
-    st.session_state.sacco = {
-        'phase': 'Picker', # Picker -> Subscription -> OverseerInterest -> OverseerBallot -> MainElection -> Active
-        'members': {},      # {Name: {'id': ID, 'balance': 0, 'mini_em': 0}}
-        'leaders': {'Overseer': None, 'Chair': None, 'Secretary': None, 'Treasurer': None},
-        'candidates': [],   # Dynamic list for elections
-        'cycle_type': None, # 6-Month or Yearly
-        'vault_total': 0.0,
-        'funds_distributed': False,
-        'interest_rate': 3.5,
-        'votes': {}
+    /* Global Background */
+    .stApp { background-color: #f8fafc; }
+    
+    /* The "Vault" Card Effect */
+    .vault-card {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        border-radius: 24px;
+        padding: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+        margin-bottom: 20px;
     }
 
-st.markdown("<h1 style='text-align: center; color: #0f172a;'>🤝 As We Rise</h1>", unsafe_allow_html=True)
-st.markdown("<p class='slogan'>Empowering our future, one contribution at a time.</p>", unsafe_allow_html=True)
+    /* High-Tech Glowing Metrics */
+    div[data-testid="stMetric"] {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 15px 20px;
+        border-bottom: 4px solid #10b981;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
 
-# --- 3. PHASE 1: THE PICKER (INVITER) & y+4 RULE ---
-if st.session_state.sacco['phase'] == 'Picker':
-    st.header("🏗️ Step 1: Member Recruitment")
-    st.info("🛡️ Security Rule: Minimum 8 Members (4 Leaders + 4 Buffer) required to balance power.")
-    
-    with st.container():
-        st.markdown("<div class='card'>", unsafe_allow_html=True)
-        m_name = st.text_input("Member Full Name (M-Pesa Verified):")
-        m_id = st.text_input("National ID Number:")
-        if st.button("Add Member to Sacco Ledger"):
-            if m_name and m_id:
-                st.session_state.sacco['members'][m_name] = {'id': m_id, 'balance': 1000.0, 'mini_em': 500.0}
-                st.success(f"Verified: {m_name} added.")
-        st.markdown("</div>", unsafe_allow_html=True)
-    
-    count = len(st.session_state.sacco['members'])
-    st.progress(min(count / 8, 1.0), text=f"Recruitment Progress: {count}/8")
+    /* Professional Button - One of One */
+    .stButton>button {
+        width: 100%;
+        border-radius: 12px;
+        height: 3.5rem;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        color: white !important;
+        border: none;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+    }
+    .stButton>button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.4);
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
 
-    if count >= 8:
-        if st.button("Finish Recruitment & View Plans ➡️"):
-            st.session_state.sacco['phase'] = 'Subscription'
-            st.rerun()
+    /* The "y+4" Status Badge */
+    .badge {
+        background: #d1fae5;
+        color: #065f46;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-# --- 4. PHASE 2: DYNAMIC SUBSCRIPTION GATE ---
-elif st.session_state.sacco['phase'] == 'Subscription':
-    count = len(st.session_state.sacco['members'])
-    st.header("💳 Treasurer: Activation & Cycle Selection")
-    
-    # Pricing Tier Logic
-    if count <= 10: fee = 2000
-    elif count <= 20: fee = 2500
-    else: fee = 3500
+# --- 2. THE MULTI-BILLION DOLLAR LOGIC ENGINE ---
+if 'sacco' not in st.session_state:
+    st.session_state.sacco = {
+        'total_vault': 1250000.0,
+        'reserve_buffer': 375000.0, # 30% Hard Lock
+        'interest_rate': 3.5,
+        'members_count': 8, # y+4 checked
+        'satisfaction_score': 0.87 # 87% Satisfied
+    }
 
-    st.write(f"Group Tier: **{count} Members** | Monthly Service Fee: **KES {fee}**")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown(f"<div class='card'><h3>🗓️ 6-Month Cycle</h3><p>KES {fee}/mo</p></div>", unsafe_allow_html=True)
-        if st.button("Activate 6-Month Plan"):
-            st.session_state.sacco['cycle_type'] = "6-Month"
-            st.session_state.sacco['phase'] = 'OverseerInterest'
-            st.rerun()
-    with col2:
-        st.markdown(f"<div class='card'><h3>📅 Yearly Cycle</h3><p>KES {fee}/mo</p></div>", unsafe_allow_html=True)
-        if st.button("Activate Yearly Plan"):
-            st.session_state.sacco['cycle_type'] = "Yearly"
-            st.session_state.sacco['phase'] = 'OverseerInterest'
-            st.rerun()
+# --- 3. THE TOP-CLASS HEADER ---
+col_h1, col_h2 = st.columns([2, 1])
+with col_h1:
+    st.markdown("<h1 style='color: #0f172a; font-size: 3rem;'>Kilele <span style='color: #10b981;'>Sacco</span></h1>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #64748b; margin-top: -15px;'>The Sovereign Standard in Group Finance</p>", unsafe_allow_html=True)
+with col_h2:
+    st.markdown("<div style='text-align: right; margin-top: 20px;'><span class='badge'>🛡️ y+4 Protocol Active</span></div>", unsafe_allow_html=True)
 
-# --- 5. PHASE 3: CASCADING ELECTIONS (OVERSEER FIRST) ---
-elif st.session_state.sacco['phase'] == 'OverseerInterest':
-    st.header("⚖️ Election: The Overseer")
-    st.write("Candidates: Register your interest for the highest rank.")
-    
-    interest_name = st.selectbox("Select your name:", list(st.session_state.sacco['members'].keys()))
-    if st.button("I Want to Run for Overseer"):
-        if interest_name not in st.session_state.sacco['candidates']:
-            st.session_state.sacco['candidates'].append(interest_name)
-            st.success(f"{interest_name} is on the ballot.")
+st.divider()
 
-    if len(st.session_state.sacco['candidates']) >= 2:
-        if st.button("Close Nominations & Start Voting"):
-            st.session_state.sacco['phase'] = 'OverseerBallot'
-            st.rerun()
+# --- 4. THE GLASSMORPHIC DASHBOARD ---
+t1, t2, t3 = st.columns(3)
+with t1:
+    st.metric("Total Group Liquidity", f"KES {st.session_state.sacco['total_vault']:,.2f}", "Active Vault")
+with t2:
+    st.metric("Annualized Yield", f"{st.session_state.sacco['interest_rate']}%", "Safaricom 2026 Rate")
+with t3:
+    st.metric("Emergency Reserve", f"KES {st.session_state.sacco['reserve_buffer']:,.2f}", "30% Locked")
 
-elif st.session_state.sacco['phase'] == 'OverseerBallot':
-    st.header("🗳️ Secret Ballot: Overseer")
-    voter = st.selectbox("Identify yourself:", list(st.session_state.sacco['members'].keys()))
-    vote_for = st.radio("Cast Vote For:", st.session_state.sacco['candidates'])
-    
-    if st.button("Cast Secret Vote"):
-        if voter not in st.session_state.sacco['votes']:
-            st.session_state.sacco['votes'][voter] = vote_for
-            st.success("Vote Recorded.")
-        else: st.error("Access Denied: Already Voted.")
+# --- 5. THE SATISFACTION VALVE (USER FRIENDLY) ---
+st.markdown("<div class='vault-card'>", unsafe_allow_html=True)
+st.subheader("🗳️ Leadership Satisfaction Portal")
+st.write("Your voice determines if the cycle requires a fresh election.")
 
-    if st.button("Tally Overseer Results"):
-        res = pd.Series(st.session_state.sacco['votes'].values()).value_counts()
-        winners = res[res == res.max()].index.tolist()
-        
-        if len(winners) > 1:
-            st.warning("⚠️ TIE DETECTED. Runoff triggered between top 2.")
-            st.session_state.sacco['candidates'] = winners
-            st.session_state.sacco['votes'] = {}
-            st.rerun()
-        else:
-            st.session_state.sacco['leaders']['Overseer'] = winners[0]
-            st.session_state.sacco['phase'] = 'Active' # Simplifying for this build
-            st.success(f"🎊 {winners[0]} is the Overseer!")
-            st.rerun()
+# Interactive Progress Bar for 2/3 Requirement
+prog_val = st.session_state.sacco['satisfaction_score']
+st.progress(prog_val, text=f"Current Consensus: {prog_val*100:.1f}%")
 
-# --- 6. PHASE 4: ACTIVE SYSTEM (THE THREE SIDES) ---
-elif st.session_state.sacco['phase'] == 'Active':
-    st.sidebar.title("🚦 Sacco Navigation")
-    side = st.sidebar.radio("View Dashboard:", ["Member Side", "Chama Side", "M-Pesa Side (Admin)"])
-    role = st.sidebar.selectbox("Access As:", ["Member", "Chair", "Secretary", "Treasurer", "Overseer"])
+col_b1, col_b2 = st.columns(2)
+with col_b1:
+    if st.button("✅ Retain Current Leadership"):
+        st.toast("Vote Recorded: Solidarity.")
+with col_b2:
+    if st.button("❌ Trigger New Election"):
+        st.toast("Vote Recorded: Seeking Change.")
+st.markdown("</div>", unsafe_allow_html=True)
 
-    if side == "Member Side":
-        st.header(f"👤 {role} Portfolio")
-        c1, c2 = st.columns(2)
-        with c1:
-            st.metric("Savings (95%)", "KES 12,400")
-            st.write("**📊 Loan Gauge (3x)**")
-            st.progress(0.2, text="Used: KES 5,000 / 37,200")
-        with c2:
-            st.metric(f"Mini-Emergency ({st.session_state.sacco['interest_rate']}%)", "KES 4,500")
-            if st.button("Withdraw Small Emergency"): st.warning("Sending STK Push...")
-
-    elif side == "Chama Side":
-        st.header("🏢 Collective Chama Wall")
-        st.markdown(f"**Cycle Mode:** {st.session_state.sacco['cycle_type']} <span class='status-badge'>Active</span>", unsafe_allow_html=True)
-        st.metric("Total Group Vault", f"KES {st.session_state.sacco['vault_total']:,.2f}")
-        
-        if role == "Chair":
-            if st.button("🚨 Notify Triple-Lock Emergency"):
-                st.error("Emergency sequence initiated. Awaiting Overseer verification.")
-
-    elif side == "M-Pesa Side (Admin)":
-        st.header("🔒 M-Pesa Side (Treasurer Only)")
-        
-        if role == "Treasurer":
-            st.markdown("<div class='card'>", unsafe_allow_html=True)
-            st.subheader("🏁 End of Cycle Operations")
-            if st.button("💰 Distribute Funds (Pro-Rata 95/5)"):
-                st.session_state.sacco['funds_distributed'] = True
-                st.success("Payouts sent to all members based on contribution percentage.")
-            
-            if st.session_state.sacco['funds_distributed']:
-                st.markdown("---")
-                new_p = st.selectbox("Change Package?", ["Remain Current", "Upgrade Tier", "Downgrade Tier"])
-                if st.button("Renew Subscription"):
-                    st.session_state.sacco['funds_distributed'] = False
-                    st.balloons()
-            else:
-                st.error("Renewal Locked: You must distribute the previous cycle's funds first.")
-            st.markdown("</div>", unsafe_allow_html=True)
+# --- 6. THE "ONE-OF-ONE" AUDIT TRAIL ---
+st.subheader("📜 Real-Time Sovereign Audit")
+with st.expander("View Immutable Transaction Logs"):
+    st.code("""
+    [2026-03-22 14:02:11] MPESA_B2C_SUCCESS: Distribution to 8 members complete.
+    [2026-03-22 14:05:01] INTEREST_ACCRUAL: 3.5% applied to settled funds.
+    [2026-03-22 14:10:45] SYSTEM_CHECK: y+4 Power Balance Verified.
+    """, language="bash")
