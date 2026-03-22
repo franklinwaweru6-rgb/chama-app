@@ -162,4 +162,3 @@ with st.expander("🔍 System Immutable Logs"):
     [16:43:10] CALC_ENGINE: Banker's Rounding applied to interest remainder.
     [16:45:00] VOTE_CHECK: 2/3 Satisfaction Gate remains LOCKED.
     """, language="bash")
-
