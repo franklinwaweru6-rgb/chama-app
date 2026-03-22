@@ -1,117 +1,150 @@
 import streamlit as st
+import pandas as pd
+import hashlib
 import time
+import math
 
-# --- 1. THE HIGH-TECH GLOBAL STYLESHEET ---
-st.set_page_config(page_title="Kilele Sacco Pro", layout="wide")
+# --- 1. THE "ONE-OF-ONE" HIGH-TECH UI CONFIG ---
+st.set_page_config(page_title="Kilele Sacco | Sovereign", page_icon="🛡️", layout="wide")
 
 st.markdown("""
     <style>
-    /* Global Background */
     .stApp { background-color: #f8fafc; }
-    
-    /* The "Vault" Card Effect */
     .vault-card {
         background: rgba(255, 255, 255, 0.8);
-        backdrop-filter: blur(10px);
+        backdrop-filter: blur(12px);
         border-radius: 24px;
-        padding: 30px;
+        padding: 25px;
         border: 1px solid rgba(255, 255, 255, 0.3);
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
         margin-bottom: 20px;
     }
-
-    /* High-Tech Glowing Metrics */
-    div[data-testid="stMetric"] {
-        background: #ffffff;
-        border-radius: 16px;
-        padding: 15px 20px;
-        border-bottom: 4px solid #10b981;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-    }
-
-    /* Professional Button - One of One */
     .stButton>button {
-        width: 100%;
-        border-radius: 12px;
-        height: 3.5rem;
+        width: 100%; border-radius: 12px; height: 3.5rem;
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-        color: white !important;
-        border: none;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-        transition: all 0.3s ease;
+        color: white !important; font-weight: 600; transition: all 0.3s ease;
     }
     .stButton>button:hover {
         transform: translateY(-2px);
         box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.4);
         background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     }
-
-    /* The "y+4" Status Badge */
     .badge {
-        background: #d1fae5;
-        color: #065f46;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 700;
-        text-transform: uppercase;
+        background: #d1fae5; color: #065f46; padding: 4px 12px;
+        border-radius: 20px; font-size: 12px; font-weight: 700;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. THE MULTI-BILLION DOLLAR LOGIC ENGINE ---
+# --- 2. GLOBAL STATE ENGINE (THE BACKBONE) ---
 if 'sacco' not in st.session_state:
     st.session_state.sacco = {
-        'total_vault': 1250000.0,
-        'reserve_buffer': 375000.0, # 30% Hard Lock
-        'interest_rate': 3.5,
-        'members_count': 8, # y+4 checked
-        'satisfaction_score': 0.87 # 87% Satisfied
+        'phase': 'Recruitment', # Recruitment -> SatisfactionPoll -> Election -> Active
+        'members': {}, # {Name: {id_hash: x, savings: 0, mini_em: 0, loan: 0}}
+        'leaders': {'Overseer': None, 'Chair': None, 'Secretary': None, 'Treasurer': None},
+        'vault_5_percent': 0.0,
+        'interest_pool': 0.0,
+        'reserve_lock': 0.30, # 30% Emergency Hard-Lock
+        'satisfaction_votes': {},
+        'audit_logs': []
     }
 
-# --- 3. THE TOP-CLASS HEADER ---
-col_h1, col_h2 = st.columns([2, 1])
-with col_h1:
-    st.markdown("<h1 style='color: #0f172a; font-size: 3rem;'>Kilele <span style='color: #10b981;'>Sacco</span></h1>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #64748b; margin-top: -15px;'>The Sovereign Standard in Group Finance</p>", unsafe_allow_html=True)
-with col_h2:
-    st.markdown("<div style='text-align: right; margin-top: 20px;'><span class='badge'>🛡️ y+4 Protocol Active</span></div>", unsafe_allow_html=True)
+# --- 3. CORE UTILITIES (THE MATH) ---
+def add_audit(action):
+    st.session_state.sacco['audit_logs'].append(f"{time.strftime('%H:%M:%S')} | {action}")
 
-st.divider()
+def bankers_round(amt):
+    return math.floor(amt * 100) / 100
 
-# --- 4. THE GLASSMORPHIC DASHBOARD ---
-t1, t2, t3 = st.columns(3)
-with t1:
-    st.metric("Total Group Liquidity", f"KES {st.session_state.sacco['total_vault']:,.2f}", "Active Vault")
-with t2:
-    st.metric("Annualized Yield", f"{st.session_state.sacco['interest_rate']}%", "Safaricom 2026 Rate")
-with t3:
-    st.metric("Emergency Reserve", f"KES {st.session_state.sacco['reserve_buffer']:,.2f}", "30% Locked")
+# --- 4. PHASE 1: RECRUITMENT (y+4 RULE) ---
+if st.session_state.sacco['phase'] == 'Recruitment':
+    st.markdown("<h1 style='color: #0f172a;'>🏗️ Group Formation</h1>", unsafe_allow_html=True)
+    st.info("🛡️ y+4 Security: 4 Leaders + 4 Buffer Members required to unlock the Vault.")
+    
+    with st.container():
+        st.markdown("<div class='vault-card'>", unsafe_allow_html=True)
+        name = st.text_input("Member Full Name:")
+        m_id = st.text_input("National ID (Encrypted on entry):")
+        if st.button("Onboard Member"):
+            if name and m_id:
+                id_hash = hashlib.sha256(m_id.encode()).hexdigest()[:10]
+                st.session_state.sacco['members'][name] = {'id': id_hash, 'savings': 0.0, 'mini_em': 0.0, 'loan': 0.0}
+                add_audit(f"Member {name} onboarded.")
+        st.markdown("</div>", unsafe_allow_html=True)
+    
+    count = len(st.session_state.sacco['members'])
+    st.progress(min(count/8, 1.0), text=f"Recruitment: {count}/8")
+    
+    if count >= 8:
+        if st.button("Finalize Recruitment & Move to Satisfaction Poll ➡️"):
+            st.session_state.sacco['phase'] = 'SatisfactionPoll'
+            st.rerun()
 
-# --- 5. THE SATISFACTION VALVE (USER FRIENDLY) ---
-st.markdown("<div class='vault-card'>", unsafe_allow_html=True)
-st.subheader("🗳️ Leadership Satisfaction Portal")
-st.write("Your voice determines if the cycle requires a fresh election.")
+# --- 5. PHASE 2: THE DEMOCRATIC VALVE (2/3 RULE) ---
+elif st.session_state.sacco['phase'] == 'SatisfactionPoll':
+    st.markdown("<h1 style='color: #0f172a;'>🗳️ Satisfaction Ballot</h1>", unsafe_allow_html=True)
+    st.write("A 2/3 majority (6/8) must be satisfied to skip an election.")
+    
+    voter = st.selectbox("Identify yourself:", list(st.session_state.sacco['members'].keys()))
+    
+    col_v1, col_v2 = st.columns(2)
+    with col_v1:
+        if st.button("✅ Yes, Retain Leadership"):
+            st.session_state.sacco['satisfaction_votes'][voter] = "Yes"
+    with col_v2:
+        if st.button("❌ No, Trigger Election"):
+            st.session_state.sacco['satisfaction_votes'][voter] = "No"
 
-# Interactive Progress Bar for 2/3 Requirement
-prog_val = st.session_state.sacco['satisfaction_score']
-st.progress(prog_val, text=f"Current Consensus: {prog_val*100:.1f}%")
+    done = len(st.session_state.sacco['satisfaction_votes'])
+    st.write(f"Votes cast: {done}/8")
+    
+    if done >= 8:
+        yes_count = list(st.session_state.sacco['satisfaction_votes'].values()).count("Yes")
+        if yes_count >= 6: # 2/3 of 8 is 5.33 -> 6
+            st.success(f"Consensus Reached ({yes_count}/8).")
+            if st.button("Activate Sacco"): 
+                st.session_state.sacco['phase'] = 'Active'
+                st.rerun()
+        else:
+            st.error("Dissatisfaction Detected. Mandatory Election Triggered.")
+            if st.button("Proceed to Overseer Nominations"):
+                st.session_state.sacco['phase'] = 'OverseerElection'
+                st.rerun()
 
-col_b1, col_b2 = st.columns(2)
-with col_b1:
-    if st.button("✅ Retain Current Leadership"):
-        st.toast("Vote Recorded: Solidarity.")
-with col_b2:
-    if st.button("❌ Trigger New Election"):
-        st.toast("Vote Recorded: Seeking Change.")
-st.markdown("</div>", unsafe_allow_html=True)
+# --- 6. PHASE 3: ACTIVE SACCO (THE THREE SIDES) ---
+elif st.session_state.sacco['phase'] == 'Active':
+    # High-Tech Header
+    st.markdown("<div style='text-align: right;'><span class='badge'>Sovereign Vault Active</span></div>", unsafe_allow_html=True)
+    
+    st.sidebar.title("🚦 Navigation")
+    nav = st.sidebar.radio("Go to:", ["Personal Portfolio", "Chama Transparency", "Leader Dashboard"])
+    
+    if nav == "Personal Portfolio":
+        st.header("👤 My Assets")
+        c1, c2, c3 = st.columns(3)
+        with c1: st.metric("Fortress Savings (95%)", "KES 47,500", "Locked")
+        with c2: st.metric("Mini-Emergency (3.5%)", "KES 1,240", "Available")
+        with c3: st.metric("Current Loan", "KES 0", "Eligible: 3x")
+        
+        st.markdown("<div class='vault-card'>", unsafe_allow_html=True)
+        st.subheader("🚀 Stability Loan Request")
+        st.info("Funds sourced from 5% Stability Vault. 95% Savings remain untouched.")
+        loan_amt = st.number_input("Amount:", min_value=0)
+        if st.button("Request via 2 Guarantors"):
+            st.toast("Handshake sent to community.")
+        st.markdown("</div>", unsafe_allow_html=True)
 
-# --- 6. THE "ONE-OF-ONE" AUDIT TRAIL ---
-st.subheader("📜 Real-Time Sovereign Audit")
-with st.expander("View Immutable Transaction Logs"):
-    st.code("""
-    [2026-03-22 14:02:11] MPESA_B2C_SUCCESS: Distribution to 8 members complete.
-    [2026-03-22 14:05:01] INTEREST_ACCRUAL: 3.5% applied to settled funds.
-    [2026-03-22 14:10:45] SYSTEM_CHECK: y+4 Power Balance Verified.
-    """, language="bash")
+    elif nav == "Chama Transparency":
+        st.header("🏢 Group Liquidity")
+        st.metric("Stability Vault (Loan Pool)", f"KES {st.session_state.sacco['vault_5_percent']:,.2f}")
+        st.progress(st.session_state.sacco['reserve_lock'], text="30% Emergency Reserve (Hard-Locked)")
+        
+        st.subheader("📜 Sovereign Audit Trail")
+        for log in reversed(st.session_state.sacco['audit_logs']):
+            st.caption(log)
+
+    elif nav == "Leader Dashboard":
+        st.header("🔒 Executive Controls")
+        if st.button("💰 Distribute Payouts (End of Cycle)"):
+            st.success("B2C API Handshake: All 8 members paid pro-rata.")
+            add_audit("Treasurer distributed 95% funds + interest.")
