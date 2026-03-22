@@ -1,136 +1,121 @@
 import streamlit as st
-import pandas as pd
 import time
 
-# --- 1. APP CONFIG & STYLING ---
-st.set_page_config(page_title="As We Rise | Sacco Pro", page_icon="🤝", layout="wide")
+# --- 1. PREMIUM STYLING ---
+st.set_page_config(page_title="As We Rise | Modern Sacco", page_icon="🤝", layout="wide")
 
-# Custom Professional CSS
 st.markdown("""
     <style>
-    .main { background-color: #f0f2f6; }
-    .stButton>button { width: 100%; border-radius: 5px; height: 3em; background-color: #2ecc71; color: white; border: none; }
-    .stButton>button:hover { background-color: #27ae60; border: none; }
-    .card { background-color: #ffffff; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; border-left: 5px solid #2ecc71; }
-    .stat-val { font-size: 24px; font-weight: bold; color: #2c3e50; }
-    .slogan { font-style: italic; color: #27ae60; text-align: center; font-size: 1.2em; margin-top: -20px; margin-bottom: 30px; }
+    .main { background-color: #f0f4f8; }
+    .stMetric { background-color: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 4px solid #27ae60; }
+    .card-box { background-color: #ffffff; padding: 25px; border-radius: 15px; border-left: 8px solid #27ae60; margin-bottom: 20px; }
+    .slogan { font-style: italic; color: #27ae60; text-align: center; font-size: 1.3em; margin-bottom: 30px; }
+    .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 0.8em; font-weight: bold; background-color: #e8f5e9; color: #2e7d32; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. SESSION STATE (The Brain) ---
-if 'subscribed' not in st.session_state:
-    st.session_state.update({
-        'subscribed': False,
-        'members': ["Chair", "Secretary", "Treasurer", "Overseer"], # Start with leaders
-        'member_cap': 20,
-        'vault_balance': 50000.0,
-        'personal_savings': 1500.0,
-        'emergency_bucket': 75.0,
-        'fines': 0,
-        'tasks': ["Pay Land Rates", "Verify June Minutes"]
-    })
+# --- 2. THE M-PESA CONTROLLER (Backend State) ---
+# This is the "Invisible Side" only you and Safaricom control
+if 'sacco' not in st.session_state:
+    st.session_state.sacco = {
+        'active': False,
+        'phase': 'Picker', # Picker -> Election -> Live
+        'members': [],
+        'package_limit': 20, # Default for KES 2,500/mo tier
+        'leader_roles': {'Chair': None, 'Secretary': None, 'Treasurer': None, 'Overseer': None},
+        'emergency_trigger': None, # Chair -> Overseer -> Member sequence
+        'chama_vault': 250000.0,
+        'personal_savings': 12000.0,
+        'mini_emergency': 4500.0,
+        'fines': 0
+    }
 
-# --- 3. THE SUBSCRIPTION GATE (LANDING PAGE) ---
-if not st.session_state.subscribed:
-    st.title("🤝 As We Rise | Modern Chama")
-    st.markdown("<p class='slogan'>\"Empowering our future, one contribution at a time.\"</p>", unsafe_allow_html=True)
-    
-    st.markdown("### 🔐 Secure Member Portal")
-    st.info("The Treasurer must select a package to activate this Chama's digital ledger.")
-    
-    col_a, col_b = st.columns(2)
-    with col_a:
-        st.markdown("""<div class='card'><h4>📅 Half-Year Growth</h4><p>Up to 20 Members</p><h3>KES 6,000</h3><ul><li>M-Pesa Integrated</li><li>Triple-Lock Emergency</li><li>Table Banking Hub</li></ul></div>""", unsafe_allow_html=True)
-        if st.button("Subscribe: 6 Months"):
-            with st.spinner("Processing Safaricom Merchant Request..."):
-                time.sleep(2)
-                st.session_state.subscribed = True
-                st.rerun()
+st.markdown("<h1 style='text-align: center; color: #2c3e50;'>🤝 As We Rise</h1>", unsafe_allow_html=True)
+st.markdown("<p class='slogan'>\"Empowering our future, one contribution at a time.\"</p>", unsafe_allow_html=True)
 
-    with col_b:
-        st.markdown("""<div class='card'><h4>🗓️ Annual Excellence</h4><p>Up to 20 Members</p><h3>KES 13,000</h3><ul><li>Everything in 6 Months</li><li>Priority NSE Support</li><li>Dividend Analytics</li></ul></div>""", unsafe_allow_html=True)
-        if st.button("Subscribe: 12 Months"):
-            st.session_state.subscribed = True
-            st.rerun()
+# --- 3. SUBSCRIPTION GATE (The Money Controller) ---
+if not st.session_state.sacco['active']:
+    st.subheader("🔐 System Activation Required")
+    st.write("Monthly Service Fee (Based on Group Size):")
+    
+    col_tier1, col_tier2, col_tier3 = st.columns(3)
+    with col_tier1:
+        st.markdown("<div class='card-box'><b>Tier 1 (1-10)</b><br><h3>KES 2,000/mo</h3></div>", unsafe_allow_html=True)
+        if st.button("Activate Tier 1"): st.session_state.sacco['active'] = True; st.rerun()
+    with col_tier2:
+        st.markdown("<div class='card-box'><b>Tier 2 (11-20)</b><br><h3>KES 2,500/mo</h3></div>", unsafe_allow_html=True)
+        if st.button("Activate Tier 2"): st.session_state.sacco['active'] = True; st.rerun()
+    with col_tier3:
+        st.markdown("<div class='card-box'><b>Tier 3 (Up to 30)</b><br><h3>KES 3,500/mo</h3></div>", unsafe_allow_html=True)
+        if st.button("Activate Tier 3"): st.session_state.sacco['active'] = True; st.rerun()
     st.stop()
 
-# --- 4. THE MAIN SACCO DASHBOARD (Unlocked) ---
-st.sidebar.markdown("# 🤝 As We Rise")
-st.sidebar.markdown("---")
-role = st.sidebar.selectbox("Access Level:", ["Member", "Secretary", "Treasurer", "Overseer", "Chair"])
-menu = st.sidebar.radio("Navigation:", ["Dashboard", "Vault & Loans", "Governance", "Welfare", "Admin"])
-
-# --- DASHBOARD ---
-if menu == "Dashboard":
-    st.header(f"Welcome back, {role}")
+# --- 4. THE PICKER & ELECTION LOGIC ---
+if st.session_state.sacco['phase'] == 'Picker':
+    st.header("🏗️ Role: The Picker (Setup)")
+    st.info("Picker adds members. Role vanishes once the 20-member cap is reached or finalized.")
     
-    # 3-Way Financial View
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.markdown(f"<div class='card'>👤 Personal Savings (95%)<br><span class='stat-val'>KES {st.session_state.personal_savings:,.2f}</span></div>", unsafe_allow_html=True)
-    with c2:
-        emer_val = st.session_state.emergency_bucket * 1.035
-        st.markdown(f"<div class='card'>🛡️ Emergency Fund (5%)<br><span class='stat-val'>KES {emer_val:,.2f}</span><br><small>Growing at 3.5% Interest</small></div>", unsafe_allow_html=True)
-    with c3:
-        st.markdown(f"<div class='card'>🏦 Group Stability Vault<br><span class='stat-val'>KES {st.session_state.vault_balance:,.2f}</span></div>", unsafe_allow_html=True)
-
-    st.markdown("### 📲 Quick Deposit")
-    amt = st.number_input("Amount (KES):", min_value=100)
-    if st.button("Send M-Pesa STK Push"):
-        st.success(f"STK Push sent to Member phone! (95% to Savings, 5% to Emergency)")
-
-# --- VAULT & LOANS ---
-elif menu == "Vault & Loans":
-    st.header("📈 Financial Hub")
-    t1, t2 = st.tabs(["💸 Table Banking", "🔄 Merry-Go-Round"])
-    
-    with t1:
-        limit = st.session_state.personal_savings * 3
-        st.markdown(f"<div class='card'><h4>Your Loan Limit: KES {limit:,.2f}</h4><p>Based on 3x your current savings.</p></div>", unsafe_allow_html=True)
-        loan_amt = st.number_input("Request Amount:", max_value=int(limit))
-        if st.button("Apply for Loan"):
-            st.warning("Request submitted. Awaiting 2/3 Member Approval.")
-            
-    with t2:
-        st.write("Current Pot Winner: **Member #5**")
-        st.progress(0.4, text="Cycle Progress")
-
-# --- GOVERNANCE ---
-elif menu == "Governance":
-    st.header("🗳️ Decision Room")
-    st.markdown("<div class='card'><h4>Active Election: New Treasurer</h4><p>30-Day Transition Clock: 24 Days Remaining</p></div>", unsafe_allow_html=True)
-    st.radio("Your Secret Ballot:", ["John Kamau", "Mary Atieno", "Bypass Candidate"])
-    if st.button("Submit Anonymous Vote"):
-        st.success("Vote recorded. Results hidden until quorum reached.")
-
-# --- WELFARE (Emergency) ---
-elif menu == "Welfare":
-    st.header("🚨 Triple-Lock Emergency Chain")
-    st.markdown("""<div class='card'>1. Chair Notifies ➡️ 2. Overseer Confirms ➡️ 3. Member Seconds</div>""", unsafe_allow_html=True)
-    
-    if role == "Chair":
-        if st.button("🔔 Notify Group of Emergency"):
-            st.error("Notification broadcasted to all members.")
-    
-    st.markdown("---")
-    st.subheader("📋 Next of Kin (NOK) - Locked")
-    st.write("Details only visible to Chair/Overseer upon full verification.")
-
-# --- ADMIN (Overseer/Secretary Tools) ---
-elif menu == "Admin":
-    if role == "Overseer":
-        st.header("👤 Member Management")
-        count = len(st.session_state.members)
-        st.write(f"Members: {count} / {st.session_state.member_cap}")
-        if count < st.session_state.member_cap:
-            new_mem = st.text_input("New Member Full Name:")
-            if st.button("Add to Sacco"):
-                st.session_state.members.append(new_mem)
-                st.success(f"{new_mem} added!")
+    new_m = st.text_input("Member Name (As per ID/M-Pesa):")
+    if st.button("Add Member to Ledger"):
+        if len(st.session_state.sacco['members']) < st.session_state.sacco['package_limit']:
+            st.session_state.sacco['members'].append(new_m)
+            st.success(f"{new_m} added. Current Total: {len(st.session_state.sacco['members'])}")
         else:
-            st.error("Membership Cap Reached! (20/20)")
+            st.error("Limit Reached!")
 
-    if role == "Secretary":
-        st.header("📝 Objective List")
-        for task in st.session_state.tasks:
-            st.checkbox(task, key=task)
+    if st.button("Start Overseer & Leader Elections"):
+        st.session_state.sacco['phase'] = 'Live'
+        st.rerun()
+
+# --- 5. THE 3-SIDED MODERN CHAMA SYSTEM ---
+else:
+    st.sidebar.title("🏢 Navigation")
+    side_view = st.sidebar.radio("Switch Dashboard:", ["Member Side", "Chama Side", "M-Pesa Side (Admin)"])
+    user_role = st.sidebar.selectbox("Identity Profile:", ["Member", "Chair", "Secretary", "Treasurer", "Overseer"])
+
+    # --- MEMBER SIDE (The Personal Portfolio) ---
+    if side_view == "Member Side":
+        st.header(f"👤 {user_role} Dashboard")
+        
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            # THE LOAN GAUGE (3x Savings)
+            limit = st.session_state.sacco['personal_savings'] * 3
+            st.markdown(f"<b>📊 Loan Gauge</b> (Limit: KES {limit:,.0f})", unsafe_allow_html=True)
+            st.progress(0.15) # 15% used
+            st.caption("Usage: KES 5,400 / 36,000")
+        with c2:
+            # MINI EMERGENCY (3.5% Growth)
+            m_emer = st.session_state.sacco['mini_emergency'] * 1.035
+            st.metric("Mini-Emergency", f"KES {m_emer:,.2f}", "+3.5% Interest")
+        with c3:
+            st.metric("Total Personal Savings", f"KES {st.session_state.sacco['personal_savings']:,.0f}")
+
+        st.markdown("---")
+        st.subheader("📲 M-Pesa Actions")
+        if st.button("Make Contribution (Daily/Weekly/Monthly)"):
+            st.success("STK Push Requested. Payout Split: 95% Savings | 5% Chama Fund.")
+
+    # --- CHAMA SIDE (The Collective Wall) ---
+    elif side_view == "Chama Side":
+        st.header("🏢 Collective Chama Hub")
+        
+        st.markdown("<div class='card-box'><b>🎯 Monthly Target</b><br>Target: KES 100,000<br>Progress: 68%</div>", unsafe_allow_html=True)
+        
+        # TRIPLE LOCK EMERGENCY
+        st.subheader("🚨 Emergency Protocol")
+        st.write("Current Status: <span class='status-badge'>Standby</span>", unsafe_allow_html=True)
+        
+        if user_role == "Chair":
+            if st.button("🔔 Trigger Emergency Notification"):
+                st.error("Notification sent to Overseer for Confirmation.")
+
+        # DIVIDEND TRACKER
+        st.subheader("📈 Dividend Tracker (5% Retention Growth)")
+        st.write("Group Assets (NSE/Land) Value: **KES 480,000**")
+
+    # --- M-PESA SIDE (The Hidden Controller) ---
+    elif side_view == "M-Pesa Side (Admin)":
+        st.title("🔒 M-Pesa Controller")
+        st.error("This is the Safaricom/Developer Backend. Restricted Access.")
+        st.write("Monitoring reinvestments and transaction security...")
