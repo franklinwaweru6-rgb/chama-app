@@ -1,8 +1,5 @@
 import streamlit as st
-import pandas as pd
-import hashlib
 import time
-import math
 
 # --- 1. GLOBAL BRANDING & THEME ENGINE ---
 st.set_page_config(page_title="Sisi Sacco", page_icon="S", layout="wide")
@@ -27,138 +24,179 @@ st.markdown("""
         justify-content: center;
         color: white;
         text-align: center;
+        animation: fadeOut 0.5s ease-in-out 8.5s forwards; /* Smooth exit */
     }
     .splash-logo {
-        font-size: 4.5rem; font-weight: 900; letter-spacing: -2px;
-        margin-bottom: 5px; animation: fadeIn 1.5s ease-in;
+        font-size: 5rem; font-weight: 900; letter-spacing: -2px;
+        margin-bottom: 5px; animation: fadeIn 2s ease-in;
     }
     .s-red { color: #ef4444; }
     .s-green { color: #10b981; }
     
-    /* High-Tech Loader */
-    .loader {
-        border: 3px solid rgba(255,255,255,0.1);
-        border-top: 3px solid #10b981;
-        border-radius: 50%;
-        width: 50px; height: 50px;
-        animation: spin 1s linear infinite;
-        margin: 20px auto;
+    /* High-Tech Loader Styling */
+    .loader-container {
+        display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 40px;
     }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .loader-bar {
+        width: 300px; height: 6px; background: rgba(255,255,255,0.1);
+        border-radius: 10px; overflow: hidden;
+    }
+    .loader-progress {
+        width: 0%; height: 100%; background: #10b981; box-shadow: 0 0 20px #10b981;
+        animation: loadProgress 4s linear forwards;
+    }
+    
+    @keyframes loadProgress { 0% { width: 0%; } 100% { width: 100%; } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; visibility: hidden; } }
 
-    /* Glassmorphic Elements */
+    /* Main App Reveal Animation */
+    .main-app-container { animation: fadeIn 1.5s ease-in; }
+
+    /* Glassmorphic UI Components */
     .vault-card {
-        background: white;
-        border-radius: 24px;
-        padding: 30px;
-        border-left: 10px solid #10b981;
+        background: white; border-radius: 24px; padding: 30px;
+        border-left: 8px solid #10b981;
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
         margin-bottom: 25px;
     }
-    
-    /* Professional Sisi Buttons */
+    .security-banner {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        color: white; border-radius: 20px; padding: 25px; margin-bottom: 30px;
+        border: 1px solid rgba(255,255,255,0.1);
+        box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+    }
+    .rule-box {
+        background: rgba(255,255,255,0.05); border-radius: 15px; padding: 20px;
+        border: 1px dashed rgba(255,255,255,0.3); margin-top: 15px; height: 100%;
+    }
     .stButton>button {
         width: 100%; border-radius: 50px; height: 3.5rem;
         background: #10b981; color: white !important;
         font-weight: 700; border: none; transition: 0.3s;
     }
-    .stButton>button:hover {
-        background: #ef4444; transform: scale(1.02);
-    }
+    .stButton>button:hover { background: #ef4444; transform: scale(1.02); }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. THE SPLASH SEQUENCER ---
+# --- 2. THE 9-SECOND CINEMATIC SEQUENCER (5s Splash + 4s Load) ---
 if 'initialized' not in st.session_state:
     splash_placeholder = st.empty()
+    
+    # STAGE 1: THE 5-SECOND CINEMATIC BRANDING
     with splash_placeholder.container():
         st.markdown(f"""
             <div class="splash-container">
-                <div class="splash-logo"><span class="s-red">S</span>ISI <span class="s-green">SACCO</span> APP</div>
-                <p style="font-size: 1.3rem; font-weight: 300; opacity: 0.9;">"As We Rise, We Lead"</p>
-                <div class="loader"></div>
-                <p style="font-family: monospace; color: #10b981; letter-spacing: 1px;">ENCRYPTING DARAJA GATEWAY... DONE</p>
-                <p style="font-family: monospace; color: #64748b;">INITIALIZING y+4 PROTOCOLS...</p>
+                <div class="splash-logo"><span class="s-red">S</span>ISI <span class="s-green">SACCO</span></div>
+                <p style="font-size: 1.5rem; font-weight: 300; letter-spacing: 3px;">JOINING HANDS FOR A WEALTHIER FUTURE</p>
+                <p style="margin-top: 60px; opacity: 0.5; font-size: 0.85rem; letter-spacing: 2px;">"AS WE RISE, WE LEAD"</p>
             </div>
         """, unsafe_allow_html=True)
+    time.sleep(5)
     
-    time.sleep(3) # The "One-of-One" cinematic delay
+    # STAGE 2: THE 4-SECOND HIGH-TECH LOAD
+    with splash_placeholder.container():
+        st.markdown(f"""
+            <div class="splash-container">
+                <div class="splash-logo" style="font-size: 3rem;"><span class="s-red">S</span>ISI <span class="s-green">SACCO</span></div>
+                <div class="loader-container">
+                    <div class="loader-bar"><div class="loader-progress"></div></div>
+                    <p style="margin-top: 20px; font-family: monospace; color: #10b981; font-size: 0.85rem; letter-spacing: 1px;">
+                        VERIFYING y + (4 or more) SECURITY PROTOCOLS...
+                    </p>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+    time.sleep(4)
+    
     splash_placeholder.empty()
     st.session_state.initialized = True
 
-# --- 3. SYSTEM STATE & LOGIC ---
+# --- 3. SYSTEM STATE & CORE LOGIC ---
 if 'sacco' not in st.session_state:
     st.session_state.sacco = {
-        'phase': 'Active', 
-        'vault_total': 1450250.0,
-        'stability_pool': 72512.50, # 5% Stability
-        'reserve_lock': 0.30,       # 30% Emergency Hard-Lock
-        'members': {'User_Admin': {'savings': 120000, 'interest': 4200, 'loan': 0}},
-        'satisfaction_votes': {}
+        'total_vault': 1450250.0,
+        'stability_pool': 72512.50,
+        'reserve_lock': 0.30,
+        'satisfaction_rate': 0.88,
+        'audit_logs': [
+            "SYSTEM: y + (4 or more) Power Balance Verified.",
+            "DARAJA: Batch B2C Handshake Successful.",
+            "LEGAL: 95/5 Split logic compliant with 2026 Act."
+        ]
     }
 
-# --- 4. TOP-CLASS DASHBOARD UI ---
+# --- 4. THE MAIN APPLICATION REVEAL ---
+st.markdown("<div class='main-app-container'>", unsafe_allow_html=True)
+
+# Header
 col_head, col_badge = st.columns([3, 1])
 with col_head:
     st.markdown("<h1><span style='color:#ef4444'>S</span>isi <span style='color:#10b981'>Sacco</span></h1>", unsafe_allow_html=True)
-    st.caption("2026 Sovereign Financial Engine | Multi-Billion Ready")
-
+    st.caption("The Sovereign Standard in Digital Group Finance")
 with col_badge:
-    st.markdown("<div style='text-align:right; margin-top:20px;'><span style='background:#fee2e2; color:#ef4444; padding:8px 16px; border-radius:30px; font-weight:bold; font-size:12px;'>🛡️ y+4 SECURED</span></div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align:right; margin-top:20px;'><span style='background:#dcfce7; color:#166534; padding:8px 16px; border-radius:30px; font-weight:bold; font-size:12px; border: 1px solid #166534;'>🛡️ VAULT SECURED</span></div>", unsafe_allow_html=True)
 
-st.divider()
+# --- 5. THE IMMEDIATE ONBOARDING: y + (4 or more) RULE ---
+st.markdown("""
+<div class='security-banner'>
+    <h2 style='margin-top: 0; color: #10b981;'>⚖️ The Sisi Security Standard</h2>
+    <p style='font-size: 1.1rem; opacity: 0.9;'>Before you view your wealth, know how it is protected. This Sacco operates strictly on the <b>y + (4 or more)</b> protocol to guarantee absolute transparency and prevent power monopolies.</p>
+    <div style='display: flex; gap: 20px; margin-top: 20px;'>
+        <div class='rule-box' style='flex: 1;'>
+            <h3 style='color: #ef4444; margin-top: 0;'>y (The 4 Executive Pillars)</h3>
+            <p style='opacity: 0.8; font-size: 0.95rem;'>The <b>Chair, Secretary, Treasurer,</b> and <b>Overseer</b>. They facilitate operations but cannot access funds without group consent.</p>
+        </div>
+        <div class='rule-box' style='flex: 1;'>
+            <h3 style='color: #10b981; margin-top: 0;'>+ (4 or more) Members</h3>
+            <p style='opacity: 0.8; font-size: 0.95rem;'>The infinite buffer of regular members. You hold the ultimate <b>2/3 Voting Power</b> to retain or replace leadership at any time.</p>
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
-# Core Metrics
+# --- 6. FINANCIAL DASHBOARD ---
 m1, m2, m3 = st.columns(3)
 with m1:
-    st.metric("Group Savings (95%)", f"KES {st.session_state.sacco['vault_total']:,.0f}", "Fortress Mode")
+    st.metric("Group Savings (95%)", f"KES {st.session_state.sacco['total_vault']:,.0f}", "Fortress Mode")
 with m2:
     st.metric("Stability Vault (5%)", f"KES {st.session_state.sacco['stability_pool']:,.2f}", "Loan Source")
 with m3:
-    st.metric("Safaricom Yield", "3.5%", "Daily Accrual")
+    st.metric("Yield Rate", "3.5%", "Daily Accrual")
 
-# --- 5. THE THREE-SIDED ENGINE ---
-tab1, tab2, tab3 = st.tabs(["👤 My Portfolio", "🏢 Group Governance", "🔒 Leader Vault"])
+# --- 7. ACTION NAVIGATION TABS ---
+t1, t2, t3 = st.tabs(["👤 My Wallet", "🏢 Governance", "🔒 Sovereign Audit"])
 
-with tab1:
+with t1:
     st.markdown("<div class='vault-card'>", unsafe_allow_html=True)
-    st.subheader("Your Personal Wealth Gauge")
-    col_p1, col_p2 = st.columns(2)
-    with col_p1:
-        st.metric("Mini-Emergency Pool", "KES 14,250", "Available Instantly")
-    with col_p2:
-        st.write("**Loan Eligibility (3x Savings)**")
-        st.progress(0.4, text="Used: KES 0 / Limit: 360,000")
+    st.subheader("Asset Breakdown")
+    col_w1, col_w2 = st.columns(2)
+    with col_w1:
+        st.metric("My Mini-Emergency Fund", "KES 14,250", "Available instantly")
+    with col_w2:
+        st.write("**Loan Eligibility (3x Savings Limit)**")
+        st.progress(0.15, text="Limit: KES 360,000")
     
     if st.button("🚀 Apply for Stability Loan"):
-        st.toast("Verifying 2 Guarantors...")
+        st.toast("Verifying Social Collateral Protocol...")
     st.markdown("</div>", unsafe_allow_html=True)
 
-with tab2:
-    st.header("Democratic Satisfaction Valve")
-    st.info("The 2/3 Rule: If satisfaction drops below 66.7%, a leadership election is auto-triggered.")
+with t2:
+    st.header("The 2/3 Satisfaction Valve")
+    st.info("The executive leaders remain in power ONLY while 66.7% of the total y + (4 or more) group is satisfied.")
     
-    # 2/3 Satisfaction Calculation
-    current_satisfaction = 0.85 # Simulated 85%
-    st.progress(current_satisfaction, text=f"Consensus: {current_satisfaction*100:.1f}%")
+    sat_val = st.session_state.sacco['satisfaction_rate']
+    st.progress(sat_val, text=f"Current Consensus: {sat_val*100:.1f}%")
     
-    if st.button("❌ I am NOT Satisfied (Vote for Election)"):
-        st.warning("Vote Recorded. If 3 members agree, the election opens.")
+    if st.button("❌ Request Leadership Review (Anonymous)"):
+        st.warning("Dissent recorded. If 1/3 of members agree, mandatory elections will be triggered.")
 
-with tab3:
-    st.header("Executive Controller")
-    st.write("Authorized Personnel Only (Treasurer / Overseer)")
+with t3:
+    st.header("Immutable Ledger Logs")
+    for log in reversed(st.session_state.sacco['audit_logs']):
+        st.code(f"> {log}", language="bash")
     if st.button("💰 Distribute End-of-Cycle Funds"):
         st.balloons()
-        st.success("95/5 Split processed. All pro-rata payments sent via M-Pesa B2C.")
+        st.success("B2C API Handshake: 95/5 Split processed for all members.")
 
-# --- 6. SOVEREIGN AUDIT TRAIL ---
-st.markdown("---")
-with st.expander("🔍 System Immutable Logs"):
-    st.code(f"""
-    [16:42:01] SECURE_HANDSHAKE: Safaricom G2 Gateway Verified.
-    [16:42:05] SYSTEM_AUDIT: All {len(st.session_state.sacco['members'])} accounts in balance.
-    [16:43:10] CALC_ENGINE: Banker's Rounding applied to interest remainder.
-    [16:45:00] VOTE_CHECK: 2/3 Satisfaction Gate remains LOCKED.
-    """, language="bash")
+st.markdown("</div>", unsafe_allow_html=True) # End main app container
