@@ -1,121 +1,171 @@
 import streamlit as st
-import time
+import pandas as pd
 
-# --- 1. PREMIUM STYLING ---
-st.set_page_config(page_title="As We Rise | Modern Sacco", page_icon="🤝", layout="wide")
+# --- 1. PREMIUM CUSTOM STYLING (THE DESIGN) ---
+st.set_page_config(page_title="As We Rise | Sacco Pro", page_icon="🤝", layout="wide")
 
 st.markdown("""
     <style>
-    .main { background-color: #f0f4f8; }
-    .stMetric { background-color: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 4px solid #27ae60; }
-    .card-box { background-color: #ffffff; padding: 25px; border-radius: 15px; border-left: 8px solid #27ae60; margin-bottom: 20px; }
-    .slogan { font-style: italic; color: #27ae60; text-align: center; font-size: 1.3em; margin-bottom: 30px; }
-    .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 0.8em; font-weight: bold; background-color: #e8f5e9; color: #2e7d32; }
+    .main { background-color: #f1f5f9; }
+    div[data-testid="stMetricValue"] { color: #059669; font-weight: 800; }
+    .stButton>button { width: 100%; border-radius: 12px; height: 3.5em; background-color: #059669; color: white; border: none; font-weight: bold; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+    .stButton>button:hover { background-color: #047857; transform: translateY(-1px); }
+    .card { background-color: white; padding: 2rem; border-radius: 1rem; border-left: 6px solid #10b981; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1); margin-bottom: 1rem; }
+    .slogan { font-style: italic; color: #065f46; text-align: center; font-size: 1.2rem; margin-bottom: 2rem; }
+    .status-badge { padding: 4px 12px; border-radius: 15px; font-size: 0.8rem; background-color: #d1fae5; color: #065f46; font-weight: bold; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. THE M-PESA CONTROLLER (Backend State) ---
-# This is the "Invisible Side" only you and Safaricom control
+# --- 2. GLOBAL SYSTEM CONTROLLER (THE M-PESA SIDE BACKEND) ---
 if 'sacco' not in st.session_state:
     st.session_state.sacco = {
-        'active': False,
-        'phase': 'Picker', # Picker -> Election -> Live
-        'members': [],
-        'package_limit': 20, # Default for KES 2,500/mo tier
-        'leader_roles': {'Chair': None, 'Secretary': None, 'Treasurer': None, 'Overseer': None},
-        'emergency_trigger': None, # Chair -> Overseer -> Member sequence
-        'chama_vault': 250000.0,
-        'personal_savings': 12000.0,
-        'mini_emergency': 4500.0,
-        'fines': 0
+        'phase': 'Picker', # Picker -> Subscription -> OverseerInterest -> OverseerBallot -> MainElection -> Active
+        'members': {},      # {Name: {'id': ID, 'balance': 0, 'mini_em': 0}}
+        'leaders': {'Overseer': None, 'Chair': None, 'Secretary': None, 'Treasurer': None},
+        'candidates': [],   # Dynamic list for elections
+        'cycle_type': None, # 6-Month or Yearly
+        'vault_total': 0.0,
+        'funds_distributed': False,
+        'interest_rate': 3.5,
+        'votes': {}
     }
 
-st.markdown("<h1 style='text-align: center; color: #2c3e50;'>🤝 As We Rise</h1>", unsafe_allow_html=True)
-st.markdown("<p class='slogan'>\"Empowering our future, one contribution at a time.\"</p>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #0f172a;'>🤝 As We Rise</h1>", unsafe_allow_html=True)
+st.markdown("<p class='slogan'>Empowering our future, one contribution at a time.</p>", unsafe_allow_html=True)
 
-# --- 3. SUBSCRIPTION GATE (The Money Controller) ---
-if not st.session_state.sacco['active']:
-    st.subheader("🔐 System Activation Required")
-    st.write("Monthly Service Fee (Based on Group Size):")
-    
-    col_tier1, col_tier2, col_tier3 = st.columns(3)
-    with col_tier1:
-        st.markdown("<div class='card-box'><b>Tier 1 (1-10)</b><br><h3>KES 2,000/mo</h3></div>", unsafe_allow_html=True)
-        if st.button("Activate Tier 1"): st.session_state.sacco['active'] = True; st.rerun()
-    with col_tier2:
-        st.markdown("<div class='card-box'><b>Tier 2 (11-20)</b><br><h3>KES 2,500/mo</h3></div>", unsafe_allow_html=True)
-        if st.button("Activate Tier 2"): st.session_state.sacco['active'] = True; st.rerun()
-    with col_tier3:
-        st.markdown("<div class='card-box'><b>Tier 3 (Up to 30)</b><br><h3>KES 3,500/mo</h3></div>", unsafe_allow_html=True)
-        if st.button("Activate Tier 3"): st.session_state.sacco['active'] = True; st.rerun()
-    st.stop()
-
-# --- 4. THE PICKER & ELECTION LOGIC ---
+# --- 3. PHASE 1: THE PICKER (INVITER) & y+4 RULE ---
 if st.session_state.sacco['phase'] == 'Picker':
-    st.header("🏗️ Role: The Picker (Setup)")
-    st.info("Picker adds members. Role vanishes once the 20-member cap is reached or finalized.")
+    st.header("🏗️ Step 1: Member Recruitment")
+    st.info("🛡️ Security Rule: Minimum 8 Members (4 Leaders + 4 Buffer) required to balance power.")
     
-    new_m = st.text_input("Member Name (As per ID/M-Pesa):")
-    if st.button("Add Member to Ledger"):
-        if len(st.session_state.sacco['members']) < st.session_state.sacco['package_limit']:
-            st.session_state.sacco['members'].append(new_m)
-            st.success(f"{new_m} added. Current Total: {len(st.session_state.sacco['members'])}")
+    with st.container():
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
+        m_name = st.text_input("Member Full Name (M-Pesa Verified):")
+        m_id = st.text_input("National ID Number:")
+        if st.button("Add Member to Sacco Ledger"):
+            if m_name and m_id:
+                st.session_state.sacco['members'][m_name] = {'id': m_id, 'balance': 1000.0, 'mini_em': 500.0}
+                st.success(f"Verified: {m_name} added.")
+        st.markdown("</div>", unsafe_allow_html=True)
+    
+    count = len(st.session_state.sacco['members'])
+    st.progress(min(count / 8, 1.0), text=f"Recruitment Progress: {count}/8")
+
+    if count >= 8:
+        if st.button("Finish Recruitment & View Plans ➡️"):
+            st.session_state.sacco['phase'] = 'Subscription'
+            st.rerun()
+
+# --- 4. PHASE 2: DYNAMIC SUBSCRIPTION GATE ---
+elif st.session_state.sacco['phase'] == 'Subscription':
+    count = len(st.session_state.sacco['members'])
+    st.header("💳 Treasurer: Activation & Cycle Selection")
+    
+    # Pricing Tier Logic
+    if count <= 10: fee = 2000
+    elif count <= 20: fee = 2500
+    else: fee = 3500
+
+    st.write(f"Group Tier: **{count} Members** | Monthly Service Fee: **KES {fee}**")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown(f"<div class='card'><h3>🗓️ 6-Month Cycle</h3><p>KES {fee}/mo</p></div>", unsafe_allow_html=True)
+        if st.button("Activate 6-Month Plan"):
+            st.session_state.sacco['cycle_type'] = "6-Month"
+            st.session_state.sacco['phase'] = 'OverseerInterest'
+            st.rerun()
+    with col2:
+        st.markdown(f"<div class='card'><h3>📅 Yearly Cycle</h3><p>KES {fee}/mo</p></div>", unsafe_allow_html=True)
+        if st.button("Activate Yearly Plan"):
+            st.session_state.sacco['cycle_type'] = "Yearly"
+            st.session_state.sacco['phase'] = 'OverseerInterest'
+            st.rerun()
+
+# --- 5. PHASE 3: CASCADING ELECTIONS (OVERSEER FIRST) ---
+elif st.session_state.sacco['phase'] == 'OverseerInterest':
+    st.header("⚖️ Election: The Overseer")
+    st.write("Candidates: Register your interest for the highest rank.")
+    
+    interest_name = st.selectbox("Select your name:", list(st.session_state.sacco['members'].keys()))
+    if st.button("I Want to Run for Overseer"):
+        if interest_name not in st.session_state.sacco['candidates']:
+            st.session_state.sacco['candidates'].append(interest_name)
+            st.success(f"{interest_name} is on the ballot.")
+
+    if len(st.session_state.sacco['candidates']) >= 2:
+        if st.button("Close Nominations & Start Voting"):
+            st.session_state.sacco['phase'] = 'OverseerBallot'
+            st.rerun()
+
+elif st.session_state.sacco['phase'] == 'OverseerBallot':
+    st.header("🗳️ Secret Ballot: Overseer")
+    voter = st.selectbox("Identify yourself:", list(st.session_state.sacco['members'].keys()))
+    vote_for = st.radio("Cast Vote For:", st.session_state.sacco['candidates'])
+    
+    if st.button("Cast Secret Vote"):
+        if voter not in st.session_state.sacco['votes']:
+            st.session_state.sacco['votes'][voter] = vote_for
+            st.success("Vote Recorded.")
+        else: st.error("Access Denied: Already Voted.")
+
+    if st.button("Tally Overseer Results"):
+        res = pd.Series(st.session_state.sacco['votes'].values()).value_counts()
+        winners = res[res == res.max()].index.tolist()
+        
+        if len(winners) > 1:
+            st.warning("⚠️ TIE DETECTED. Runoff triggered between top 2.")
+            st.session_state.sacco['candidates'] = winners
+            st.session_state.sacco['votes'] = {}
+            st.rerun()
         else:
-            st.error("Limit Reached!")
+            st.session_state.sacco['leaders']['Overseer'] = winners[0]
+            st.session_state.sacco['phase'] = 'Active' # Simplifying for this build
+            st.success(f"🎊 {winners[0]} is the Overseer!")
+            st.rerun()
 
-    if st.button("Start Overseer & Leader Elections"):
-        st.session_state.sacco['phase'] = 'Live'
-        st.rerun()
+# --- 6. PHASE 4: ACTIVE SYSTEM (THE THREE SIDES) ---
+elif st.session_state.sacco['phase'] == 'Active':
+    st.sidebar.title("🚦 Sacco Navigation")
+    side = st.sidebar.radio("View Dashboard:", ["Member Side", "Chama Side", "M-Pesa Side (Admin)"])
+    role = st.sidebar.selectbox("Access As:", ["Member", "Chair", "Secretary", "Treasurer", "Overseer"])
 
-# --- 5. THE 3-SIDED MODERN CHAMA SYSTEM ---
-else:
-    st.sidebar.title("🏢 Navigation")
-    side_view = st.sidebar.radio("Switch Dashboard:", ["Member Side", "Chama Side", "M-Pesa Side (Admin)"])
-    user_role = st.sidebar.selectbox("Identity Profile:", ["Member", "Chair", "Secretary", "Treasurer", "Overseer"])
-
-    # --- MEMBER SIDE (The Personal Portfolio) ---
-    if side_view == "Member Side":
-        st.header(f"👤 {user_role} Dashboard")
-        
-        c1, c2, c3 = st.columns(3)
+    if side == "Member Side":
+        st.header(f"👤 {role} Portfolio")
+        c1, c2 = st.columns(2)
         with c1:
-            # THE LOAN GAUGE (3x Savings)
-            limit = st.session_state.sacco['personal_savings'] * 3
-            st.markdown(f"<b>📊 Loan Gauge</b> (Limit: KES {limit:,.0f})", unsafe_allow_html=True)
-            st.progress(0.15) # 15% used
-            st.caption("Usage: KES 5,400 / 36,000")
+            st.metric("Savings (95%)", "KES 12,400")
+            st.write("**📊 Loan Gauge (3x)**")
+            st.progress(0.2, text="Used: KES 5,000 / 37,200")
         with c2:
-            # MINI EMERGENCY (3.5% Growth)
-            m_emer = st.session_state.sacco['mini_emergency'] * 1.035
-            st.metric("Mini-Emergency", f"KES {m_emer:,.2f}", "+3.5% Interest")
-        with c3:
-            st.metric("Total Personal Savings", f"KES {st.session_state.sacco['personal_savings']:,.0f}")
+            st.metric(f"Mini-Emergency ({st.session_state.sacco['interest_rate']}%)", "KES 4,500")
+            if st.button("Withdraw Small Emergency"): st.warning("Sending STK Push...")
 
-        st.markdown("---")
-        st.subheader("📲 M-Pesa Actions")
-        if st.button("Make Contribution (Daily/Weekly/Monthly)"):
-            st.success("STK Push Requested. Payout Split: 95% Savings | 5% Chama Fund.")
-
-    # --- CHAMA SIDE (The Collective Wall) ---
-    elif side_view == "Chama Side":
-        st.header("🏢 Collective Chama Hub")
+    elif side == "Chama Side":
+        st.header("🏢 Collective Chama Wall")
+        st.markdown(f"**Cycle Mode:** {st.session_state.sacco['cycle_type']} <span class='status-badge'>Active</span>", unsafe_allow_html=True)
+        st.metric("Total Group Vault", f"KES {st.session_state.sacco['vault_total']:,.2f}")
         
-        st.markdown("<div class='card-box'><b>🎯 Monthly Target</b><br>Target: KES 100,000<br>Progress: 68%</div>", unsafe_allow_html=True)
-        
-        # TRIPLE LOCK EMERGENCY
-        st.subheader("🚨 Emergency Protocol")
-        st.write("Current Status: <span class='status-badge'>Standby</span>", unsafe_allow_html=True)
-        
-        if user_role == "Chair":
-            if st.button("🔔 Trigger Emergency Notification"):
-                st.error("Notification sent to Overseer for Confirmation.")
+        if role == "Chair":
+            if st.button("🚨 Notify Triple-Lock Emergency"):
+                st.error("Emergency sequence initiated. Awaiting Overseer verification.")
 
-        # DIVIDEND TRACKER
-        st.subheader("📈 Dividend Tracker (5% Retention Growth)")
-        st.write("Group Assets (NSE/Land) Value: **KES 480,000**")
-
-    # --- M-PESA SIDE (The Hidden Controller) ---
-    elif side_view == "M-Pesa Side (Admin)":
-        st.title("🔒 M-Pesa Controller")
-        st.error("This is the Safaricom/Developer Backend. Restricted Access.")
-        st.write("Monitoring reinvestments and transaction security...")
+    elif side == "M-Pesa Side (Admin)":
+        st.header("🔒 M-Pesa Side (Treasurer Only)")
+        
+        if role == "Treasurer":
+            st.markdown("<div class='card'>", unsafe_allow_html=True)
+            st.subheader("🏁 End of Cycle Operations")
+            if st.button("💰 Distribute Funds (Pro-Rata 95/5)"):
+                st.session_state.sacco['funds_distributed'] = True
+                st.success("Payouts sent to all members based on contribution percentage.")
+            
+            if st.session_state.sacco['funds_distributed']:
+                st.markdown("---")
+                new_p = st.selectbox("Change Package?", ["Remain Current", "Upgrade Tier", "Downgrade Tier"])
+                if st.button("Renew Subscription"):
+                    st.session_state.sacco['funds_distributed'] = False
+                    st.balloons()
+            else:
+                st.error("Renewal Locked: You must distribute the previous cycle's funds first.")
+            st.markdown("</div>", unsafe_allow_html=True)
