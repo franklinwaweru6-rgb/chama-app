@@ -77,5 +77,5 @@ with t3:
 with st.sidebar:
     st.header("Sacco Actions")
     if st.button("Simulate New Member Invite"):
-        if member_
+        if member_count < 30:
 
