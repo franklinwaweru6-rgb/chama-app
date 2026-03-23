@@ -1,145 +1,165 @@
 import streamlit as st
+import time
 
-# --- 1. CORE SYSTEM CONFIG ---
-st.set_page_config(page_title="Sisi Sacco Master", layout="wide", initial_sidebar_state="expanded")
+# --- 1. SYSTEM CONFIG ---
+st.set_page_config(page_title="Sisi Sacco Sovereign", layout="wide")
 
-# --- 2. THE FOUNDATIONAL THEORY (Initialization) ---
-# y = 4 Core Leaders (Chair, Secretary, Treasurer, Overseer)
-# +4 = Base independent members required for a 2/3 democratic majority
+# --- 2. SESSION STATE INITIALIZATION ---
+if 'app_state' not in st.session_state:
+    st.session_state.app_state = "splash"  # States: splash, terms, dashboard
+
 if 'sacco' not in st.session_state:
     st.session_state.sacco = {
-        'roles': {
-            'Chair': 'Leader_01',
-            'Secretary': 'Leader_02',
-            'Treasurer': 'Leader_03',
-            'Overseer': 'Leader_04'
-        },
-        'members': ['Member_01', 'Member_02', 'Member_03', 'Member_04'], 
+        'roles': {'Chair': 'User_01', 'Secretary': 'User_02', 'Treasurer': 'User_03', 'Overseer': 'User_04'},
+        'members': ['Member_01', 'Member_02', 'Member_03', 'Member_04'],
         'vault_balance': 1450250.0,
-        'audit_trail': ["GENESIS: Sisi Sacco Protocol Initialized", "SECURITY: y+4 Rule Active"],
+        'audit_trail': ["GENESIS: Sisi Sacco Protocol Initialized"],
         'is_election_phase': False,
         'billing_cycle': "6-Month",
         'current_cycle': 1
     }
 
-# --- 3. DYNAMIC THEORY CALCULATIONS ---
-member_count = len(st.session_state.sacco['members'])
-total_headcount = 4 + member_count  # Leaders (y) + Members
-
-# THE THREE-TIERED PRICING PLANS (As per your theory)
-if total_headcount <= 10:
-    plan_name, monthly_rate, plan_limit = "🥉 Bronze (Hustler)", 2000, 10
-elif total_headcount <= 20:
-    plan_name, monthly_rate, plan_limit = "🥈 Silver (Standard)", 2500, 20
-else:
-    # Max is 30 members + 4 leaders = 34
-    plan_name, monthly_rate, plan_limit = "🥇 Gold (Sovereign)", 3500, 34 
-
-# THE TWO MAJOR SUBSCRIPTION MODES
-if st.session_state.sacco['billing_cycle'] == "Yearly":
-    # 12 Months with 10% Discount
-    renewal_cost = (monthly_rate * 12) * 0.90
-    cycle_label = "Yearly Plan (10% Discount Applied)"
-else:
-    # Standard 6-Month Block
-    renewal_cost = monthly_rate * 6
-    cycle_label = "Standard 6-Month Plan"
-
-# --- 4. THE RENEWAL & RESET LOGIC ---
-def execute_full_renewal():
-    """Theory: After renewal, it starts all over again."""
-    st.session_state.sacco['vault_balance'] = 0.0
-    # Reset members back to the base +4 buffer
-    st.session_state.sacco['members'] = ['Member_01', 'Member_02', 'Member_03', 'Member_04']
-    st.session_state.sacco['is_election_phase'] = True
-    st.session_state.sacco['current_cycle'] += 1
-    st.session_state.sacco['audit_trail'].append(f"RENEWAL: Cycle {st.session_state.sacco['current_cycle']} started. All progress reset.")
-
-# --- 5. MAIN INTERFACE ---
-st.title("🇰🇪 Sisi Sacco: Sovereign System")
-st.markdown(f"**Current Package:** {plan_name} | **Billing:** {cycle_label}")
-
-# MANDATORY ELECTION CHECK
-if st.session_state.sacco['is_election_phase']:
-    st.error("🗳️ MANDATORY ELECTION: Subscription renewed. Roles must be re-validated.")
-    if st.button("Confirm Election Completion"):
-        st.session_state.sacco['is_election_phase'] = False
-        st.rerun()
-
-# TOP-LEVEL METRICS
-col1, col2, col3 = st.columns(3)
-col1.metric("Vault Total", f"KES {st.session_state.sacco['vault_balance']:,.2f}")
-col2.metric("People in Plan", f"{total_headcount}/{plan_limit}")
-col3.metric("Inviter Buffer", f"{member_count}/30", help="Max buffer is 30 members")
-
-st.divider()
-
-# --- 6. THE THREE TABS (Portfolio, Governance, Audit) ---
-tab_port, tab_gov, tab_audit = st.tabs(["📊 Portfolio", "⚖️ Governance", "📜 Audit Log"])
-
-with tab_port:
-    st.subheader("Subscription & Financials")
-    c1, c2 = st.columns(2)
-    with c1:
-        # Toggle between the two major plans
-        mode = st.radio("Change Cycle:", ["6-Month", "Yearly"], 
-                        index=0 if st.session_state.sacco['billing_cycle'] == "6-Month" else 1)
-        if mode != st.session_state.sacco['billing_cycle']:
-            st.session_state.sacco['billing_cycle'] = mode
-            st.rerun()
-    with c2:
-        st.write("**Next Renewal Amount:**")
-        st.title(f"KES {renewal_cost:,.0f}")
-
-    if st.button("🔄 Renew & Reset (Start New Cycle)", type="primary", use_container_width=True):
-        execute_full_renewal()
-        st.rerun()
-
-with tab_gov:
-    st.subheader("⚖️ y + 4 Governance Protocol")
+# --- 3. THE SPLASH SCREEN ---
+if st.session_state.app_state == "splash":
+    st.markdown("<h1 style='text-align: center; color: #1E88E5;'>🇰🇪 SISI SACCO</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center;'>Securing the Future of Group Savings</p>", unsafe_allow_html=True)
     
-    # Democratic Guardrail
-    if member_count >= 4:
-        st.success("✅ DEMOCRATICALLY SECURE: Leader power is checked by members.")
+    # Simple progress bar to simulate loading
+    progress_bar = st.progress(0)
+    for percent_complete in range(100):
+        time.sleep(0.01)
+        progress_bar.progress(percent_complete + 1)
+    
+    if st.button("Enter Application", use_container_width=True):
+        st.session_state.app_state = "terms"
+        st.rerun()
+
+# --- 4. TERMS & CONDITIONS GATE ---
+elif st.session_state.app_state == "terms":
+    st.title("⚖️ Terms of Service")
+    st.info("Please review the Sisi Sacco Sovereign Protocol rules before entering.")
+    
+    with st.expander("Read Full Terms & Conditions"):
+        st.write("""
+        1. **Security:** This app operates on the y+4 democratic principle.
+        2. **Financials:** Subscription tiers are Bronze (Hustler), Silver (Standard), and Gold (Sovereign).
+        3. **Renewals:** Subscription renewal triggers a mandatory leadership election and financial reset.
+        4. **Governance:** Members have the right to exit the Chama at any time, subject to group audit.
+        """)
+    
+    agree = st.checkbox("I accept the Sisi Sacco Sovereign Protocol and the y+4 Governance Rule.")
+    
+    if st.button("Proceed to Dashboard"):
+        if agree:
+            st.session_state.app_state = "dashboard"
+            st.rerun()
+        else:
+            st.warning("You must accept the terms to continue.")
+
+# --- 5. THE MAIN MASTER DASHBOARD ---
+elif st.session_state.app_state == "dashboard":
+    
+    # --- DYNAMIC LOGIC ---
+    member_count = len(st.session_state.sacco['members'])
+    total_headcount = 4 + member_count
+
+    # Tier Pricing Theory
+    if total_headcount <= 10:
+        plan_name, monthly_rate, plan_limit = "🥉 Bronze (Hustler)", 2000, 10
+    elif total_headcount <= 20:
+        plan_name, monthly_rate, plan_limit = "🥈 Silver (Standard)", 2500, 20
     else:
-        st.error(f"⚠️ VULNERABLE: Need {4 - member_count} more members for y+4 base.")
+        plan_name, monthly_rate, plan_limit = "🥇 Gold (Sovereign)", 3500, 34 
 
-    g_roles, g_mems = st.columns(2)
-    with g_roles:
-        st.write("**Core Roles (y):**")
-        for role, name in st.session_state.sacco['roles'].items():
-            st.code(f"{role}: {name}")
-    with g_mems:
-        st.write(f"**Member Buffer ({member_count}/30):**")
-        for m in st.session_state.sacco['members']:
-            mc1, mc2 = st.columns([4, 1])
-            mc1.text(m)
-            # MEMBER EXIT LOGIC
-            if mc2.button("Exit", key=f"exit_{m}"):
-                st.session_state.sacco['members'].remove(m)
-                st.session_state.sacco['audit_trail'].append(f"EXIT: {m} has left the Sacco.")
+    # Billing Mode Theory
+    if st.session_state.sacco['billing_cycle'] == "Yearly":
+        renewal_cost = (monthly_rate * 12) * 0.90
+        cycle_label = "Yearly (10% Discount)"
+    else:
+        renewal_cost = monthly_rate * 6
+        cycle_label = "Standard 6-Month"
+
+    # --- UI LAYOUT ---
+    st.title("🇰🇪 Sisi Sacco: Sovereign Dashboard")
+    st.caption(f"Package: {plan_name} | Cycle: {st.session_state.sacco['current_cycle']}")
+
+    # Mandatory Election Overlay
+    if st.session_state.sacco['is_election_phase']:
+        st.warning("🗳️ ELECTION REQUIRED: Please re-validate Core Roles for the new cycle.")
+        if st.button("Confirm Election Completion"):
+            st.session_state.sacco['is_election_phase'] = False
+            st.rerun()
+
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Vault Total", f"KES {st.session_state.sacco['vault_balance']:,.0f}")
+    m2.metric("Plan Occupancy", f"{total_headcount}/{plan_limit}")
+    m3.metric("Inviter Buffer", f"{member_count}/30")
+
+    st.divider()
+
+    # --- TABS ---
+    tab_port, tab_gov, tab_audit = st.tabs(["📊 Portfolio", "⚖️ Governance", "📜 Audit Log"])
+
+    with tab_port:
+        st.subheader("Subscription & Reset")
+        col_a, col_b = st.columns(2)
+        with col_a:
+            mode = st.radio("Select Billing Mode:", ["6-Month", "Yearly"], 
+                            index=0 if st.session_state.sacco['billing_cycle'] == "6-Month" else 1)
+            if mode != st.session_state.sacco['billing_cycle']:
+                st.session_state.sacco['billing_cycle'] = mode
                 st.rerun()
+        with col_b:
+            st.write("**Next Renewal Amount:**")
+            st.title(f"KES {renewal_cost:,.0f}")
 
-with tab_audit:
-    st.subheader("System Logs")
-    for log in reversed(st.session_state.sacco['audit_trail']):
-        st.text(f"LOG >> {log}")
+        if st.button("🔄 Renew & Reset Cycle", type="primary", use_container_width=True):
+            # FULL RESET THEORY: Wipes money, resets members, starts over
+            st.session_state.sacco['vault_balance'] = 0.0
+            st.session_state.sacco['members'] = ['Member_01', 'Member_02', 'Member_03', 'Member_04']
+            st.session_state.sacco['is_election_phase'] = True
+            st.session_state.sacco['current_cycle'] += 1
+            st.session_state.sacco['audit_trail'].append(f"RENEWAL: Cycle {st.session_state.sacco['current_cycle']} started.")
+            st.rerun()
 
-# --- 7. SIDEBAR ACTIONS (The Inviter Logic) ---
-with st.sidebar:
-    st.header("Admin Controls")
-    # ADDITION LOGIC: Check plan limit AND 30-member buffer limit
-    if st.button("➕ Add Member to Chama", use_container_width=True):
-        if total_headcount < plan_limit:
-            if member_count < 30:
-                new_mem = f"Member_{member_count + 1:02d}"
-                st.session_state.sacco['members'].append(new_mem)
-                st.session_state.sacco['audit_trail'].append(f"JOIN: {new_mem} added by Inviter.")
+    with tab_gov:
+        st.subheader("⚖️ y + 4 Governance")
+        if member_count >= 4:
+            st.success("✅ SECURE: Democratic majority is active.")
+        else:
+            st.error(f"⚠️ VULNERABLE: Need {4 - member_count} more members.")
+
+        g_l, g_m = st.columns(2)
+        with g_l:
+            st.write("**Core Roles (y):**")
+            for r, n in st.session_state.sacco['roles'].items():
+                st.code(f"{r}: {n}")
+        with g_m:
+            st.write(f"**Member Buffer ({member_count}/30):**")
+            for m in st.session_state.sacco['members']:
+                mc1, mc2 = st.columns([4, 1])
+                mc1.text(m)
+                if mc2.button("Exit", key=f"exit_{m}"):
+                    st.session_state.sacco['members'].remove(m)
+                    st.session_state.sacco['audit_trail'].append(f"EXIT: {m} left.")
+                    st.rerun()
+
+    with tab_audit:
+        for log in reversed(st.session_state.sacco['audit_trail']):
+            st.text(f"LOG >> {log}")
+
+    # --- SIDEBAR ---
+    with st.sidebar:
+        st.header("Admin")
+        if st.button("➕ Add Member", use_container_width=True):
+            if total_headcount < plan_limit and member_count < 30:
+                new_id = f"Member_{member_count + 1:02d}"
+                st.session_state.sacco['members'].append(new_id)
+                st.session_state.sacco['audit_trail'].append(f"JOIN: {new_id} added.")
                 st.rerun()
             else:
-                st.error("Inviter max (30) reached.")
-        else:
-            st.error(f"Plan Full! Current {plan_name} only allows {plan_limit} people.")
-    
-    st.divider()
-    st.caption("Sisi Sacco Tech v4.2 | 2026")
+                st.error("Cannot add: Plan Full or Max limit reached.")
+        
+        if st.button("🚪 Logout"):
+            st.session_state.app_state = "splash"
+            st.rerun()
